@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using WeatherApp.Helpers;
 using WeatherApp.Models;
+using Xamarin.Essentials;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 
@@ -16,19 +17,21 @@ namespace WeatherApp.Views
     [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class CurrentWeatherPage : ContentPage
     {
-        private string Location;
+        private string Location { get; set; } = "Metkovic";
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
+
         private string APIkey;
 
         public CurrentWeatherPage()
         {
             InitializeComponent();
-            GetWeatherInfo();
+            GetCoordinates();
+            //GetWeatherInfo();
         }
 
         private async void GetWeatherInfo()
         {
-            Location = "Split";
-
             var data = await new DatabaseService().GetKeysAsync();
 
             foreach (var item in data)
@@ -72,8 +75,6 @@ namespace WeatherApp.Views
 
         private async void GetForecast()
         {
-            Location = "Split";
-
             var data = await new DatabaseService().GetKeysAsync();
 
             foreach (var item in data)
@@ -131,6 +132,44 @@ namespace WeatherApp.Views
             {
                 await DisplayAlert("Weather Info", "No forecast information found", "OK");
             }
+        }
+
+        private async void GetCoordinates()
+        {
+            try
+            {
+                var request = new GeolocationRequest(GeolocationAccuracy.Best);
+                var location = await Geolocation.GetLocationAsync(request);
+
+                if (location != null)
+                {
+                    Latitude = location.Latitude;
+                    Longitude = location.Longitude;
+
+                    Location = await GetCity(location);
+
+                    GetWeatherInfo();
+                }
+            }
+
+            catch (Exception ex)
+            {
+
+                Console.WriteLine(ex.StackTrace);
+            }
+        }
+
+        private async Task<string> GetCity(Location location)
+        {
+            var places = await Geocoding.GetPlacemarksAsync(location);
+            var currentPlace = places?.FirstOrDefault();
+
+            if (currentPlace != null)
+            {
+                return $"{currentPlace.Locality},{currentPlace.CountryName}";
+            }
+
+            return null;
         }
     }
 }
