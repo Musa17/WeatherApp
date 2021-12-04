@@ -27,7 +27,6 @@ namespace WeatherApp.Views
         {
             InitializeComponent();
             GetCoordinates();
-            //GetWeatherInfo();
         }
 
         private async void GetWeatherInfo()
